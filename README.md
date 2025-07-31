@@ -13,7 +13,7 @@ Welcome to **Dogecoin Dash**, an 8-bit-style, chiptune-fueled endless runner bui
 
 ## 🎮 Game Concept
 
-**Dogecoin Dash** is a fast, offline, 8-bit-style endless runner where a Shiba Inu sprints across a tiled Mars landscape (256x96) to collect Dogecoins. Dodge Martian rocks, grab bonus coins from **Dogecoin King**, and unlock the bonus stage with a massive **Ani-chan** (320x96, blonde twin-tails, goth-loli). Run past her to end the stage. Built with Grok’s code and pro pixel art, live on GitHub.
+**Dogecoin Dash** is a fast, offline, 8-bit-style endless runner where a Shiba Inu sprints across a tiled Mars landscape (256x96) to collect Dogecoins. Choose from skins with unique gameplay traits, dodge Martian rocks (losing 10 coins per hit), grab bonus coins from **Dogecoin King**, and unlock the bonus stage with **Ani-chan** (320x96, goth-loli). Run past her for extra points. Built with Grok’s code and pro pixel art, live on GitHub.
 
 - **Genre**: 2D Endless Runner
 - **Platform**: Web (Flutter Web, mobile/PC via itch.io/Game Jolt)
@@ -27,12 +27,12 @@ Welcome to **Dogecoin Dash**, an 8-bit-style, chiptune-fueled endless runner bui
 ## ✨ Detailed Specifications
 
 ### 1. Sprite Specifications
-All sprites use a 4-color gray palette (black, white, light gray, dark gray) for 8-bit-style monochrome.
+All sprites use a 4-color gray palette (black, white, light gray, dark gray).
 
 - **Player Characters (Skins)**:
-  - **Default Shiba**: 16x16 pixels, 4-frame run animation (tail wag), free.
-  - **Tesla Shiba**: 16x16 pixels, 4-frame run animation (mantle flutter), Tesla logo accent, $0.99 IAP.
-  - **Ani-chan**: 24x24 pixels, 4-frame run animation (twin-tails sway + frill flutter), blonde twin-tails, goth-loli fashion, $1.99 IAP.
+  - **Default Shiba**: 16x16 pixels, standard speed (-100 to 100 pixels/second), jump (32 pixels, 0.5 seconds), free.
+  - **Tesla Shiba**: 16x16 pixels, 1.5x speed (-150 to 150 pixels/second), 1.2x jump (38 pixels, 0.5 seconds), 1 durability (ignores 1 hit/stage), $0.99 IAP.
+  - **Ani-chan**: 24x24 pixels, standard speed (-100 to 100 pixels/second), jump (32 pixels, 0.5 seconds), larger hitbox, 2x bonus stage score (+1000 points), $1.99 IAP.
   - **Animation**: 0.2 seconds/frame, 4-frame loop.
 
 - **NPC: Dogecoin King**:
@@ -42,13 +42,13 @@ All sprites use a 4-color gray palette (black, white, light gray, dark gray) for
 
 - **Obstacles: Martian Rocks**:
   - **Size**: 16x16 pixels, 4-color gray.
-  - **Design**: Angular rocks (based on Kenney.nl, monochrome), random spawn (5-10 seconds).
-  - **Animation**: 2-frame shake effect (0.1 seconds) on collision.
+  - **Design**: Angular rocks (Kenney.nl-based, monochrome), random spawn (5-10 seconds).
+  - **Effect**: 2-frame shake (0.1 seconds) on collision, -10 coins penalty.
 
 - **Collectibles: Dogecoin**:
   - **Size**: 16x16 pixels, 4-color gray.
   - **Design**: Simple coin (Kenney.nl-based, monochrome), sparkle effect.
-  - **Animation**: Blink (4 frames, 0.2 seconds/frame), 2-frame scale-up (0.1 seconds) on collection.
+  - **Animation**: Blink (4 frames, 0.2 seconds/frame), +100 points.
 
 - **Effects: Stars**:
   - **Size**: 8x8 pixels, 4-color gray.
@@ -59,7 +59,7 @@ All sprites use a 4-color gray palette (black, white, light gray, dark gray) for
 
 ### 2. Background Specifications
 - **Mars Landscape**:
-  - **Size**: 256x64 (ground) + 256x32 (sky) = 256x96 pixels total, 4-color gray.
+  - **Size**: 256x64 (ground) + 256x32 (sky) = 256x96 pixels, 4-color gray.
   - **Design**: Seamless tiled ground (rocks, craters) + starry sky, 8-bit-style.
   - **Tiling**: `ParallaxComponent`, ground (-50 pixels/second), sky (-25 pixels/second).
 - **Bonus Stage**:
@@ -67,7 +67,6 @@ All sprites use a 4-color gray palette (black, white, light gray, dark gray) for
   - **Design**: Goth-loli Ani-chan (blonde twin-tails, frill dress) laying down, overlaid on Mars ground.
   - **Movement**: `ParallaxComponent`, -100 pixels/second, 10-second duration.
   - **Effects**: Stars (8x8), coins (16x16) with blink animations.
-  - **Optimization**: ~20KB, lightweight for Web.
 
 - **Sample Code**:
   ```dart
@@ -89,7 +88,7 @@ All sprites use a 4-color gray palette (black, white, light gray, dark gray) for
     Future<void> onLoad() async {
       parallax = await gameRef.loadParallax([
         ParallaxImageData('mars_ground_mono.png', repeat: ParallaxRepeat.repeatX, velocityMultiplier: Vector2(1, 0)),
-        ParallaxImageData('ani_laying_mono_gothloli.png', repeat: ParallaxRepeat.none, velocityMultiplier: Vector2(2, 0)), // 320x96
+        ParallaxImageData('ani_laying_mono_gothloli.png', repeat: ParallaxRepeat.none, velocityMultiplier: Vector2(2, 0)),
       ], baseVelocity: Vector2(-100, 0));
       for (int i = 0; i < 5; i++) {
         add(SpriteAnimationComponent(
@@ -106,102 +105,104 @@ All sprites use a 4-color gray palette (black, white, light gray, dark gray) for
 
 - Triggers: Bonus stage after 1000 coins or 10 minutes, lasts 10 seconds.
 - Movement:
-    - Player: Left-right (-100 to 100 pixels/second), jump (32 pixels, 0.5 seconds).
+    - Player: Left-right (speed varies by skin), jump (height varies by skin).
     - Obstacles/Coins: -50 pixels/second, random spawn (5-10 seconds/3-5 seconds).
-- Scoring: Coin (+100 points), bonus stage completion (+500 points).
-- Game Over: 3 collisions with rocks.
+- Scoring: Coin (+100 points), bonus stage completion (+500 or +1000 with Ani-chan).
+- Game Over: 3 hits (Tesla Shiba ignores 1 hit).
+- Collision Penalty: -10 coins per rock hit, clamped at 0.
 
-### 4. Monetization
+### 4. UI Specifications
 
-- AdMob: Banner (bottom), interstitial (post-game over), est. $50-300/month at 10K plays (eCPM $0.5-3).
-- IAP: Tesla Shiba ($0.99), Ani-chan ($1.99), King Boost ($0.99), est. $199 at 1% conversion for 10K plays.
-- Dogecoin Tipping: QR code on game-over screen, est. $10-100 at 10K plays (0.1 DOGE tips).
-- itch.io/Game Jolt: PWYW ($1-5), AdMob, ads ($1/1,000 plays).
+- **Coin Display**:
+    - Position: Bottom-right (x=220, y=80 on 256x96 screen).
+    - Design: 16x16 coin icon + 8-bit-style text (4x8 pixels).
+    - Function: Shows collected coins, updates on collect/lose.
 
-### 5. Sound
+### 5. Monetization
+
+- AdMob: Banner (bottom), interstitial (post-game over).
+- IAP: Tesla Shiba ($0.99), Ani-chan ($1.99), King Boost ($0.99).
+- Dogecoin Tipping: QR code on game-over screen.
+
+### 6. Sound
 
 - Music: Pixabay 8-bit chiptune.
 - Effects: Collision ("piro-piro"), coin collect ("chin!").
 
 ---
-
 ### 🛠️ Development Plan
-
- Built with Flutter and Flame for a lightweight Web game. Grok assists with code, debugging, and ideas. Pro artist’s goth-loli Ani-chan is the star! Live on GitHub.Tech Stack
+ 
+ Built with Flutter and Flame. Grok assists with code and ideas. Live on GitHub.Tech Stack
 
 - Framework: Flutter + Flame
-- Assets: Custom Ani-chan (320x96), free assets (Kenney.nl, OpenGameArt)
+- Assets: Custom Ani-chan (320x96), free assets (Kenney.nl)
 - Deployment: itch.io, Game Jolt, GitHub Pages
 - Monetization: AdMob, IAP, Dogecoin tipping
-- Tools: Aseprite/Procreate, VS Code, Filmora, Grok
+- Tools: Aseprite, VS Code, Filmora, Grok
 
-### Milestones
+#### Milestones
 
 1. Prototype (1 Week):
-    - Shiba (16x16), rocks (16x16), coins (16x16), Web build (GitHub Pages).
-    - Ani-chan (320x96) sketch refinement.
-    - Grok: "8-bit-style obstacle spawn code".
+    - Shiba (16x16), rocks (16x16), coins (16x16), coin display, Web build.
+    - Ani-chan (320x96) refinement.
+    - Grok: "Obstacle spawn + collision code".
 2. Alpha (2 Weeks):
-    - Dogecoin King (24x24), bonus stage (Ani-chan 320x96).
+    - Dogecoin King (24x24), bonus stage.
     - AdMob integration.
     - itch.io/Game Jolt launch.
 3. Release (3 Weeks):
-    - Skins (Tesla Shiba 16x16, Ani-chan 24x24), IAP, tipping.
-    - Chiptune audio, Filmora trailer.
+    - Skins, IAP, tipping.
+    - Audio, trailer.
     - X campaign.
 
 ---
 
 ### 📣 Viral Strategy (#GrokChallenge)
 
-- 10-Second Trailer (Filmora): Shiba (16x16), goth-loli Ani-chan (320x96), King (24x24). Text: "Grok’s Dogecoin Dash! [itch.io link] #GrokChallenge"
-- Real-Time Dev: Commits like "Goth-loli Ani-chan DOON! added! [GitHub link] #DogecoinDash"
-- Community: Polls (e.g., "Next skin? Goth-loli Cat King? SpaceX Ani?"), Reddit (r/webgames, r/indiegames).
+- 10-Second Trailer: Shiba, Ani-chan (320x96), King. Text: "Grok’s Dogecoin Dash! [itch.io link] #GrokChallenge"
+- Real-Time Dev: "Goth-loli Ani-chan DOON! added! [GitHub link] #DogecoinDash"
+- Community: Polls, Reddit posts.
 - Elon Bait: "
     
     @elonmusk
     
-    , goth-loli Ani-chan’s DOON! with King? [itch.io link] #GrokChallenge"
+    , goth-loli Ani’s DOON! [itch.io link] #GrokChallenge"
 
 ---
 
-### 💰 Monetization
+### 💰   Monetization
 
 - AdMob: $50-300/month at 10K plays.
-- IAP: Skins ($0.99-$2.99), ad removal ($1.99), King Boost ($0.99).
-- Dogecoin Tipping: QR code, $10-100 at 10K plays.
+- IAP: Skins ($0.99-$2.99), ad removal ($1.99).
+- Dogecoin Tipping: $10-100 at 10K plays.
 - itch.io/Game Jolt: PWYW, ads.
 
 ---
 
-### 🚀 Why Dogecoin Dash?
+### 🚀  Why Dogecoin Dash?
 
-- Goth-loli Art: Pro artist’s Ani-chan in 8-bit-style glory!
-- Grok-Powered: AI-driven, live on GitHub.
-- Meme Appeal: Shiba + goth-loli Ani-chan + Tesla King = X virality.
-- Community-Driven: Ideas via X/GitHub.
-- Fast & Free: Web play, no servers.
+- Goth-loli Art: Pro artist’s Ani-chan!
+- Grok-Powered: AI-driven, GitHub live.
+- Meme Appeal: Shiba + Ani-chan + Tesla King.
+- Community-Driven: X/GitHub ideas.
+- Fast & Free: Web play.
 
 ---
 
-### 🐾 Join the Challenge!
+### 🐾  Join the Challenge!
 
 1. Play: itch.io (#) | Game Jolt (#)
-2. Contribute: Suggest Ani-chan poses on GitHub Issues (#).
-3. Share: Post scores on X with #GrokChallenge #DogecoinDash!
-4. Tip: Love goth-loli Ani-chan? Send Dogecoin! QR Code (#)
+2. Contribute: GitHub Issues (#)
+3. Share: #GrokChallenge #DogecoinDash!
+4. Tip: Send Dogecoin! QR Code (#)
 5. Follow: [#GrokChallenge](/hashtag/GrokChallenge)
 
-Let’s conquer Mars with goth-loli Ani-chan’s DOON! and Dogecoin King!
-
-@elonmusk
-
-, are you the King? 😎 
+Conquer Mars with goth-loli Ani-chan’s DOON!@elonmusk, King? 😎
 
 ---
 
-📜 LicenseMIT License - Free to play, share, contribute!
+### 📜 LicenseMIT License.
 
 ---
 
-Created with ❤️, Grok, and pro artist’s monochrome 8-bit-style goth-loli Ani-chan by [izumi77]. Powered by xAI.
+Created with ❤️, Grok, and pro artist’s goth-loli Ani-chan by izumix77]. Powered by xAI.
